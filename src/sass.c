@@ -276,16 +276,39 @@ zend_class_entry *sass_get_exception_base(TSRMLS_D)
  * PHP EXTENSION INFRASTRUCTURE
  * ------------------------------------------------------------ */
 
+ZEND_BEGIN_ARG_INFO(arginfo_sass_void, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_compile, 0, 0, 1)
+    ZEND_ARG_INFO(0, sass_string)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_compileFile, 0, 0, 1)
+    ZEND_ARG_INFO(0, filename)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_setStyle, 0, 0, 1)
+    ZEND_ARG_INFO(0, style)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_setIncludePath, 0, 0, 1)
+    ZEND_ARG_INFO(0, include_path)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_setPrecision, 0, 0, 1)
+    ZEND_ARG_INFO(0, precision)
+ZEND_END_ARG_INFO()
+
 zend_function_entry sass_methods[] = {
-    PHP_ME(Sass,  __construct,     NULL,  ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-    PHP_ME(Sass,  compile,         NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  compileFile,     NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  getStyle,        NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  setStyle,        NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  getIncludePath,  NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  setIncludePath,  NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  getPrecision,    NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  setPrecision,    NULL,  ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  __construct,     arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(Sass,  compile,         arginfo_sass_compile,        ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  compileFile,     arginfo_sass_compileFile,    ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getStyle,        arginfo_sass_void,           ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setStyle,        arginfo_sass_setStyle,       ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getIncludePath,  arginfo_sass_void,           ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setIncludePath,  arginfo_sass_setIncludePath, ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getPrecision,    arginfo_sass_void,           ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setPrecision,    arginfo_sass_setPrecision,   ZEND_ACC_PUBLIC)
     PHP_MALIAS(Sass, compile_file, compileFile, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
