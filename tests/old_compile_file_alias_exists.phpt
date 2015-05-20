@@ -1,12 +1,12 @@
 --TEST--
-compileFile() compiles correct file
+old compile_file() alias exists
 --SKIPIF--
 <?php if (!extension_loaded("sass")) print "skip"; ?>
 --FILE--
 <?php
 
 $sass = new Sass();
-$css = $sass->compileFile('tests/support/test.scss');
+$css = $sass->compile_file('tests/support/test.scss');
 echo $css;
 
 ?>

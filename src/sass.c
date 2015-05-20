@@ -134,7 +134,7 @@ PHP_METHOD(Sass, compile)
  *
  * Parse a whole file FULL of Sass and return the CSS output
  */
-PHP_METHOD(Sass, compile_file)
+PHP_METHOD(Sass, compileFile)
 {
     sass_object *this = (sass_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
 
@@ -279,13 +279,14 @@ zend_class_entry *sass_get_exception_base(TSRMLS_D)
 zend_function_entry sass_methods[] = {
     PHP_ME(Sass,  __construct,     NULL,  ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Sass,  compile,         NULL,  ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  compile_file,    NULL,  ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  compileFile,     NULL,  ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  getStyle,        NULL,  ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  setStyle,        NULL,  ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  getIncludePath,  NULL,  ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  setIncludePath,  NULL,  ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  getPrecision,    NULL,  ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  setPrecision,    NULL,  ZEND_ACC_PUBLIC)
+    PHP_MALIAS(Sass, compile_file, compileFile, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
