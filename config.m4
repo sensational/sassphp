@@ -6,5 +6,17 @@ if test "$PHP_SASS" != "no"; then
 
   LDFLAGS="-lsass -L"`pwd`"/lib/libsass/lib/ -lstdc++"
 
+  # manually extract sass version as the non-autotool'ed
+  # sass_version.h that comes with libsass doesn't contain
+  # the version
+  sass_version=$(cd lib/libsass && ./version.sh)
+
+  if test "x$sass_version" != "x" ; then
+      # escape hell. This is what we need to pass to the
+      # compiler: -DLIBSASS_VERSION="\"3.2.4\""
+      CFLAGS="-DLIBSASS_VERSION=\"\\\"$sass_version\\\"\" $CFLAGS"
+      CXXFLAGS="-DLIBSASS_VERSION=\"\\\"$sass_version\\\"\" $CXXFLAGS"
+  fi
+
   PHP_NEW_EXTENSION(sass, src/sass.c src/utilities.c, $ext_shared)
 fi

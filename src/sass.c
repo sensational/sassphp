@@ -263,6 +263,14 @@ PHP_METHOD(Sass, setPrecision)
     RETURN_NULL();
 }
 
+PHP_METHOD(Sass, getLibraryVersion)
+{
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "", NULL) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    RETURN_STRING(libsass_version(), 1)
+}
 /* --------------------------------------------------------------
  * EXCEPTION HANDLING
  * ------------------------------------------------------------ */
@@ -300,15 +308,16 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_setPrecision, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 zend_function_entry sass_methods[] = {
-    PHP_ME(Sass,  __construct,     arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-    PHP_ME(Sass,  compile,         arginfo_sass_compile,        ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  compileFile,     arginfo_sass_compileFile,    ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  getStyle,        arginfo_sass_void,           ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  setStyle,        arginfo_sass_setStyle,       ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  getIncludePath,  arginfo_sass_void,           ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  setIncludePath,  arginfo_sass_setIncludePath, ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  getPrecision,    arginfo_sass_void,           ZEND_ACC_PUBLIC)
-    PHP_ME(Sass,  setPrecision,    arginfo_sass_setPrecision,   ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  __construct,       arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(Sass,  compile,           arginfo_sass_compile,        ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  compileFile,       arginfo_sass_compileFile,    ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getStyle,          arginfo_sass_void,           ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setStyle,          arginfo_sass_setStyle,       ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getIncludePath,    arginfo_sass_void,           ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setIncludePath,    arginfo_sass_setIncludePath, ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getPrecision,      arginfo_sass_void,           ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setPrecision,      arginfo_sass_setPrecision,   ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  getLibraryVersion, arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_MALIAS(Sass, compile_file, compileFile, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
@@ -348,6 +357,7 @@ static PHP_MINFO_FUNCTION(sass)
     php_info_print_table_row(2, "sass support", "enabled");
     php_info_print_table_row(2, "version", SASS_VERSION);
     php_info_print_table_row(2, "flavor", SASS_FLAVOR);
+    php_info_print_table_row(2, "libsass version", libsass_version());
     php_info_print_table_end();
 }
 
