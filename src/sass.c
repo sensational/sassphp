@@ -101,8 +101,9 @@ void set_options(sass_object *this, struct Sass_Context *ctx)
 
     sass_option_set_precision(opts, this->precision);
     sass_option_set_output_style(opts, this->style);
-    if (this->include_paths != NULL)
+    if (this->include_paths != NULL) {
         sass_option_set_include_path(opts, this->include_paths);
+    }
     sass_option_set_source_comments(opts, this->comments);
     if (this->comments != NULL) {
     sass_option_set_omit_source_map_url(opts, false);
@@ -114,8 +115,9 @@ void set_options(sass_object *this, struct Sass_Context *ctx)
     sass_option_set_omit_source_map_url(opts, false);
     sass_option_set_source_map_contents(opts, true);
     }
-    if (this->map_root != NULL)
-    ssass_option_set_source_map_root(opts, this->map_root);
+    if (this->map_root != NULL) {
+    sass_option_set_source_map_root(opts, this->map_root);
+    }
 
 }
 

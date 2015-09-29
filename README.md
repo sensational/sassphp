@@ -94,7 +94,6 @@ Aliases also exist so you can also use:
 You can set the source map file for the library to use:
 
     $sass = new Sass();
-    $sass->setComments(true);
     $sass->setMapPath('/random.output.css.map');
     $css = $sass->compileFile($source);
 
