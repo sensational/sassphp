@@ -12,7 +12,7 @@ $css = $sass->compile('
 ');
 
 echo $css;
-echo $sass->compile_file(__DIR__.'/support/import.scss');
+echo $sass->compileFile(__DIR__.'/support/import.scss');
 
 ?>
 --EXPECT--
