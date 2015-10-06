@@ -298,14 +298,13 @@ PHP_METHOD(Sass, setMapPath)
 {
     zval *this = getThis();
 
-    long new_precision;
+    char *path;
+    int path_len;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &new_precision) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &path, &path_len) == FAILURE)
         RETURN_FALSE;
-    }
 
     sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
-
     if (obj->map_path != NULL)
         efree(obj->map_path);
     obj->map_path = estrndup(path, path_len);
