@@ -105,8 +105,8 @@ void set_options(sass_object *this, struct Sass_Context *ctx)
         sass_option_set_include_path(opts, this->include_paths);
     }
     sass_option_set_source_comments(opts, this->comments);
-    if (this->comments != NULL) {
-    sass_option_set_omit_source_map_url(opts, false);
+    if (this->comments) {
+        sass_option_set_omit_source_map_url(opts, false);
     }
     sass_option_set_source_map_embed(opts, this->map_embed);
     sass_option_set_source_map_contents(opts, this->map_contents);
