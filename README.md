@@ -6,7 +6,7 @@ The `sass` extension for PHP gives you an object-oriented system of parsing [Sas
 
 Sass is a CSS pre-processor language to add on exciting, new, awesome features to CSS. Sass was the first language of its kind and by far the most mature and up to date codebase.
 
-Sass was originally created by Hampton Catlin ([@hcatlin](http://twitter.com/hcatlin)). The extension and continuing evolution of the language has all been the result of years of work by Natalie Weizenbaum ([@nex4](http://twitter.com/nex4)) and Chris Eppstein ([@chriseppstein](http://twitter.com/chriseppstein)).
+Sass was originally created by Hampton Catlin ([@hcatlin](http://twitter.com/hcatlin)). The extension and continuing evolution of the language has all been the result of years of work by Natalie Weizenbaum ([@nex3](http://twitter.com/nex3)) and Chris Eppstein ([@chriseppstein](http://twitter.com/chriseppstein)).
 
 For more information about Sass itself, please visit [http://sass-lang.com](http://sass-lang.com)
 
