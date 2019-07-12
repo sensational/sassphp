@@ -162,8 +162,11 @@ PHP_METHOD(Sass, compile)
  */
 PHP_METHOD(Sass, compileFile)
 {
-    array_init(return_value);
     sass_object *this = sass_object_fetch_object(Z_OBJ_P(getThis()));
+
+    if (this->map_path != NULL){
+        array_init(return_value);
+    }
 
     // We need a file name and a length
     char *file;
