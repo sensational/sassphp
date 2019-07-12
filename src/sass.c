@@ -20,7 +20,6 @@
 zend_object_handlers sass_handlers;
 
 typedef struct sass_object {
-    zend_object zo;
     int style;
     char* include_paths;
     long precision;
@@ -30,7 +29,13 @@ typedef struct sass_object {
     bool map_embed;
     bool map_contents;
     char* map_root;
+    zend_object zo;
 } sass_object;
+
+static inline sass_object *sass_object_fetch_object(zend_object *obj) {
+    return (sass_object *)((char *)(obj) - XtOffsetOf(sass_object, zo));
+}
+#define Z_SASS_P(zv)  sass_object_fetch_object(Z_OBJ_P((zv)))
 
 zend_class_entry *sass_ce;
 
@@ -51,27 +56,17 @@ void sass_free_storage(void *object TSRMLS_DC)
     efree(obj);
 }
 
-zend_object_value sass_create_handler(zend_class_entry *type TSRMLS_DC)
+zend_object *sass_create_handler(zend_class_entry *type)
 {
-    zval *tmp;
-    zend_object_value retval;
+    sass_object *obj = ecalloc(1,
+        sizeof(sass_object) +
+        zend_object_properties_size(type));
 
-    sass_object *obj = (sass_object *)emalloc(sizeof(sass_object));
-    memset(obj, 0, sizeof(sass_object));
+    zend_object_std_init(&obj->zo, type);
+    object_properties_init(&obj->zo, type);
+    obj->zo.handlers = &sass_handlers;
 
-    obj->zo.ce = type;
-
-    ALLOC_HASHTABLE(obj->zo.properties);
-    zend_hash_init(obj->zo.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-#if PHP_VERSION_ID > 50399
-    object_properties_init(&(obj->zo), type);
-#endif
-
-    retval.handle = zend_objects_store_put(obj, NULL,
-        sass_free_storage, NULL TSRMLS_CC);
-    retval.handlers = &sass_handlers;
-
-    return retval;
+    return &obj->zo;
 }
 
 PHP_METHOD(Sass, __construct)
@@ -82,7 +77,7 @@ PHP_METHOD(Sass, __construct)
         RETURN_NULL();
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(this));
     obj->style = SASS_STYLE_NESTED;
     obj->include_paths = NULL;
     obj->precision = 5;
@@ -128,11 +123,11 @@ void set_options(sass_object *this, struct Sass_Context *ctx)
 PHP_METHOD(Sass, compile)
 {
 
-    sass_object *this = (sass_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    sass_object *this = sass_object_fetch_object(Z_OBJ_P(getThis()));
 
     // Define our parameters as local variables
     char *source;
-    int source_len;
+    size_t source_len;
 
     // Use zend_parse_parameters() to grab our source from the function call
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &source, &source_len) == FAILURE){
@@ -154,7 +149,7 @@ PHP_METHOD(Sass, compile)
     }
     else
     {
-        RETVAL_STRING(sass_context_get_output_string(ctx), 1);
+        RETVAL_STRING(sass_context_get_output_string(ctx));
     }
 
     sass_delete_data_context(data_context);
@@ -168,11 +163,11 @@ PHP_METHOD(Sass, compile)
 PHP_METHOD(Sass, compileFile)
 {
     array_init(return_value);
-    sass_object *this = (sass_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    sass_object *this = sass_object_fetch_object(Z_OBJ_P(getThis()));
 
     // We need a file name and a length
     char *file;
-    int file_len;
+    size_t file_len;
 
     // Grab the file name from the function
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &file, &file_len) == FAILURE)
@@ -205,16 +200,16 @@ PHP_METHOD(Sass, compileFile)
 
         if (this->map_path != NULL ) {
             // Send it over to PHP.
-            add_next_index_string(return_value, sass_context_get_output_string(ctx), 1);
+            add_next_index_string(return_value, sass_context_get_output_string(ctx));
         } else {
-            RETVAL_STRING(sass_context_get_output_string(ctx), 1);
+            RETVAL_STRING(sass_context_get_output_string(ctx));
         }
 
         // Do we have source maps to go?
         if (this->map_path != NULL)
         {
             // Send it over to PHP.
-            add_next_index_string(return_value, sass_context_get_source_map_string(ctx), 1);
+            add_next_index_string(return_value, sass_context_get_source_map_string(ctx));
         }
     }
 
@@ -229,21 +224,19 @@ PHP_METHOD(Sass, getStyle)
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     RETURN_LONG(obj->style);
 }
 
 PHP_METHOD(Sass, setStyle)
 {
-    zval *this = getThis();
-
     long new_style;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &new_style) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));;
     obj->style = new_style;
 
     RETURN_NULL();
@@ -251,28 +244,24 @@ PHP_METHOD(Sass, setStyle)
 
 PHP_METHOD(Sass, getIncludePath)
 {
-    zval *this = getThis();
-
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "", NULL) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
-    if (obj->include_paths == NULL) RETURN_STRING("", 1)
-    RETURN_STRING(obj->include_paths, 1)
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
+    if (obj->include_paths == NULL) RETURN_STRING("")
+    RETURN_STRING(obj->include_paths)
 }
 
 PHP_METHOD(Sass, setIncludePath)
 {
-    zval *this = getThis();
-
     char *path;
-    int path_len;
+    size_t path_len;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &path, &path_len) == FAILURE)
         RETURN_FALSE;
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     if (obj->include_paths != NULL)
         efree(obj->include_paths);
     obj->include_paths = estrndup(path, path_len);
@@ -282,29 +271,26 @@ PHP_METHOD(Sass, setIncludePath)
 
 PHP_METHOD(Sass, getMapPath)
 {
-    zval *this = getThis();
-
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "", NULL) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
 
-    if (obj->map_path == NULL) RETURN_STRING("", 1)
-    RETURN_STRING(obj->map_path, 1)
+    if (obj->map_path == NULL) RETURN_STRING("")
+    RETURN_STRING(obj->map_path)
 }
 
 PHP_METHOD(Sass, setMapPath)
 {
-    zval *this = getThis();
 
     char *path;
-    int path_len;
+    size_t path_len;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &path, &path_len) == FAILURE)
         RETURN_FALSE;
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     if (obj->map_path != NULL)
         efree(obj->map_path);
     obj->map_path = estrndup(path, path_len);
@@ -315,27 +301,23 @@ PHP_METHOD(Sass, setMapPath)
 
 PHP_METHOD(Sass, getPrecision)
 {
-    zval *this = getThis();
-
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "", NULL) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     RETURN_LONG(obj->precision);
 }
 
 PHP_METHOD(Sass, setPrecision)
 {
-    zval *this = getThis();
-
     long new_precision;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &new_precision) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     obj->precision = new_precision;
 
     RETURN_NULL();
@@ -343,27 +325,23 @@ PHP_METHOD(Sass, setPrecision)
 
 PHP_METHOD(Sass, getEmbed)
 {
-    zval *this = getThis();
-
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "", NULL) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     RETURN_LONG(obj->map_embed);
 }
 
 PHP_METHOD(Sass, setEmbed)
 {
-    zval *this = getThis();
+    zend_bool new_map_embed;
 
-    bool new_map_embed;
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &new_map_embed) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &new_map_embed) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     obj->map_embed = new_map_embed;
 
     RETURN_NULL();
@@ -372,27 +350,25 @@ PHP_METHOD(Sass, setEmbed)
 
 PHP_METHOD(Sass, getComments)
 {
-    zval *this = getThis();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "", NULL) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     RETURN_LONG(obj->comments);
 }
 
 PHP_METHOD(Sass, setComments)
 {
-    zval *this = getThis();
 
-    bool new_comments;
+    zend_bool new_comments;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &new_comments) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &new_comments) == FAILURE) {
         RETURN_FALSE;
     }
 
-    sass_object *obj = (sass_object *)zend_object_store_get_object(this TSRMLS_CC);
+    sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
     obj->comments = new_comments;
 
     RETURN_NULL();
@@ -405,7 +381,7 @@ PHP_METHOD(Sass, getLibraryVersion)
         RETURN_FALSE;
     }
 
-    RETURN_STRING(libsass_version(), 1)
+    RETURN_STRING(libsass_version())
 }
 /* --------------------------------------------------------------
  * EXCEPTION HANDLING
@@ -483,15 +459,14 @@ static PHP_MINIT_FUNCTION(sass)
     zend_class_entry exception_ce;
 
     INIT_CLASS_ENTRY(ce, "Sass", sass_methods);
-
+    ce.create_object = sass_create_handler;
     sass_ce = zend_register_internal_class(&ce TSRMLS_CC);
-    sass_ce->create_object = sass_create_handler;
 
     memcpy(&sass_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     sass_handlers.clone_obj = NULL;
 
     INIT_CLASS_ENTRY(exception_ce, "SassException", NULL);
-    sass_exception_ce = zend_register_internal_class_ex(&exception_ce, sass_get_exception_base(TSRMLS_C), NULL TSRMLS_CC);
+    sass_exception_ce = zend_register_internal_class_ex(&exception_ce, sass_get_exception_base(TSRMLS_C));
 
     #define REGISTER_SASS_CLASS_CONST_LONG(name, value) zend_declare_class_constant_long(sass_ce, ZEND_STRS( #name ) - 1, value TSRMLS_CC)
 
