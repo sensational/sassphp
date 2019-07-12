@@ -106,9 +106,9 @@ void set_options(sass_object *this, struct Sass_Context *ctx)
     sass_option_set_source_map_embed(opts, this->map_embed);
     sass_option_set_source_map_contents(opts, this->map_contents);
     if (this->map_path != NULL) {
-    sass_option_set_source_map_file(opts, this->map_path);
-    sass_option_set_omit_source_map_url(opts, false);
-    sass_option_set_source_map_contents(opts, true);
+        sass_option_set_source_map_file(opts, this->map_path);
+        sass_option_set_omit_source_map_url(opts, true);
+        sass_option_set_source_map_contents(opts, false);
     }
     if (this->map_root != NULL) {
     sass_option_set_source_map_root(opts, this->map_root);
