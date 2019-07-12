@@ -4,6 +4,9 @@ PHP_ARG_ENABLE(sass, [whether to enable sass extension],
 if test "$PHP_SASS" != "no"; then
   PHP_ADD_LIBRARY_WITH_PATH(sass, lib/libexec, LIBSASS_SHARED_LIBADD)
 
+  CFLAGS="-I$(pwd)/lib/libsass/include $CFLAGS"
+  CXXFLAGS="-I$(pwd)/lib/libsass/include $CXXFLAGS"
+
   LDFLAGS="-lsass -L"`pwd`"/lib/libsass/lib/ -lstdc++"
 
   # manually extract sass version as the non-autotool'ed

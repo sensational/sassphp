@@ -38,3 +38,9 @@ scan_makefile_in.awk
 *.ncb
 run-tests.php
 test.php
+tests/*.sh
+tests/*.diff
+tests/*.out
+tests/*.exp
+tests/*.log
+tests/*.php
