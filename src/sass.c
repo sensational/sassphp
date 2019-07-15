@@ -29,6 +29,7 @@ typedef struct sass_object {
     bool map_embed;
     bool map_contents;
     char* map_root;
+    zval importer;
     zend_object zo;
 } sass_object;
 
@@ -69,6 +70,117 @@ zend_object *sass_create_handler(zend_class_entry *type)
     return &obj->zo;
 }
 
+
+char *to_c_string(zval *var){
+    if (Z_TYPE_P(var) != IS_STRING) {
+        convert_to_string(var);
+    }
+    return Z_STRVAL_P(var);
+}
+
+Sass_Import_Entry array_to_import(zval* val){
+    if (Z_TYPE_P(val) != IS_ARRAY){
+        return NULL;
+    }
+
+    int len = zend_hash_num_elements(Z_ARRVAL_P(val));
+    if (len < 1){
+        zend_throw_exception_ex(sass_exception_ce, 0 TSRMLS_CC, "Need at least redirected path");
+        return NULL;
+    }
+
+    char *file = 0;
+    zval *temp = zend_hash_index_find(Z_ARRVAL_P(val), 0);
+    if (temp != NULL && !Z_ISUNDEF_P(temp) && Z_TYPE_P(temp) != IS_NULL){
+        file = sass_copy_c_string(to_c_string(temp));
+    }
+
+    char *content = 0;
+    temp = zend_hash_index_find(Z_ARRVAL_P(val), 1);
+    if (temp != NULL && !Z_ISUNDEF_P(temp) && Z_TYPE_P(temp) != IS_NULL){
+        content = sass_copy_c_string(to_c_string(temp));
+    }
+
+    char *map = 0;
+    if (len >= 3){
+        temp = zend_hash_index_find(Z_ARRVAL_P(val), 2);
+        if (temp != NULL && !Z_ISUNDEF_P(temp) && Z_TYPE_P(temp) != IS_NULL){
+            map = sass_copy_c_string(to_c_string(temp));
+        }
+    }
+
+    return sass_make_import_entry(
+        file, content, map
+    );
+}
+
+Sass_Import_List sass_importer(const char* path, Sass_Importer_Entry cb, struct Sass_Compiler* comp){
+
+    sass_object *obj = (sass_object *) sass_importer_get_cookie(cb);
+    if (obj == NULL){
+        zend_throw_exception_ex(sass_exception_ce, 0 TSRMLS_CC, "Internal Error: Failed to retrieve object reference");
+        return NULL;
+    }
+
+    zval cb_args[1];
+    zval cb_retval;
+    ZVAL_STRING(&cb_args[0], path);
+
+    if (call_user_function_ex(EG(function_table), NULL, &obj->importer, &cb_retval, 1, cb_args, 0, NULL) != SUCCESS || Z_ISUNDEF(cb_retval)) {
+        zval_ptr_dtor(&cb_args[0]);
+        return NULL;
+    }
+    zval_ptr_dtor(&cb_args[0]);
+
+    if (Z_TYPE(cb_retval) == IS_NULL){
+        zval_ptr_dtor(&cb_retval);
+        return NULL;
+    }
+
+    if (Z_TYPE(cb_retval) != IS_ARRAY){
+        zval_ptr_dtor(&cb_retval);
+        zend_throw_exception_ex(sass_exception_ce, 0 TSRMLS_CC, "Importer callback must return an array");
+        return NULL;
+    }
+
+    int result_len = zend_hash_num_elements(Z_ARRVAL(cb_retval));
+    if (result_len < 1){
+        zval_ptr_dtor(&cb_retval);
+        return NULL;
+    }
+
+
+    zval *first_element = zend_hash_index_find(Z_ARRVAL(cb_retval), 0);
+    if (first_element == NULL){
+        zval_ptr_dtor(&cb_retval);
+        zend_throw_exception_ex(sass_exception_ce, 0 TSRMLS_CC, "Importer callback must return an array");
+        return NULL;
+    }
+
+    Sass_Import_List list;
+    if (Z_TYPE_P(first_element) == IS_ARRAY){
+        list = sass_make_import_list(result_len);
+        int idx = 0;
+        zval *element;
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL(cb_retval), element) {
+            if (Z_TYPE_P(element) != IS_ARRAY){
+                zval_ptr_dtor(&cb_retval);
+                zend_throw_exception_ex(sass_exception_ce, 0 TSRMLS_CC, "Importer callback must return an array");
+                return NULL;
+            }
+            Sass_Import_Entry imp = array_to_import(element);
+            if (imp == NULL) return NULL;
+            list[idx] = imp;
+            idx++;
+        } ZEND_HASH_FOREACH_END();
+    }else{
+        list = sass_make_import_list(1);
+        list[0] = array_to_import(&cb_retval);
+    }
+
+    return list;
+}
+
 PHP_METHOD(Sass, __construct)
 {
     zval *this = getThis();
@@ -87,6 +199,7 @@ PHP_METHOD(Sass, __construct)
     obj->map_embed = false;
     obj->map_contents = false;
     obj->omit_map_url = true;
+    ZVAL_UNDEF(&obj->importer);
 }
 
 
@@ -111,7 +224,14 @@ void set_options(sass_object *this, struct Sass_Context *ctx)
         sass_option_set_source_map_contents(opts, false);
     }
     if (this->map_root != NULL) {
-    sass_option_set_source_map_root(opts, this->map_root);
+        sass_option_set_source_map_root(opts, this->map_root);
+    }
+
+    if (!Z_ISUNDEF(this->importer)) {
+        Sass_Importer_Entry imp = sass_make_importer(sass_importer, 0, this);
+        Sass_Importer_List imp_list = sass_make_importer_list(1);
+        sass_importer_set_list_entry(imp_list, 0, imp);
+        sass_option_set_c_importers(opts, imp_list);
     }
 }
 
@@ -377,6 +497,39 @@ PHP_METHOD(Sass, setComments)
     RETURN_NULL();
 }
 
+PHP_METHOD(Sass, setImporter)
+{
+    zval *importer;
+    zend_string *callback_name;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &importer) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    sass_object *obj = Z_SASS_P(getThis());
+
+    if (Z_TYPE_P(importer) == IS_NULL){
+        if (!Z_ISUNDEF(obj->importer)) {
+            zval_ptr_dtor(&obj->importer);
+        }
+        ZVAL_UNDEF(&obj->importer);
+        RETURN_TRUE;
+    }
+
+    if (!zend_is_callable(importer, 0, &callback_name)) {
+        php_error_docref(NULL, E_WARNING, "%s is not a valid callable", ZSTR_VAL(callback_name));
+        zend_string_release(callback_name);
+        RETURN_FALSE;
+    }
+
+    if (!Z_ISUNDEF(obj->importer)) {
+        zval_ptr_dtor(&obj->importer);
+        ZVAL_UNDEF(&obj->importer);
+    }
+
+    ZVAL_COPY(&obj->importer, importer);
+    RETURN_TRUE;
+}
 
 PHP_METHOD(Sass, getLibraryVersion)
 {
@@ -434,6 +587,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_setMapPath, 0, 0, 1)
     ZEND_ARG_INFO(0, map_path)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_setImporter, 0, 0, 1)
+    ZEND_ARG_CALLABLE_INFO(0, importer, 1)
+ZEND_END_ARG_INFO()
+
+
 zend_function_entry sass_methods[] = {
     PHP_ME(Sass,  __construct,       arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Sass,  compile,           arginfo_sass_compile,        ZEND_ACC_PUBLIC)
@@ -450,6 +608,7 @@ zend_function_entry sass_methods[] = {
     PHP_ME(Sass,  setEmbed,          arginfo_sass_setComments,    ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  getMapPath,        arginfo_sass_void,           ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  setMapPath,        arginfo_sass_setMapPath,     ZEND_ACC_PUBLIC)
+    PHP_ME(Sass,  setImporter,       arginfo_sass_setImporter,    ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  getLibraryVersion, arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_MALIAS(Sass, compile_file, compileFile, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
