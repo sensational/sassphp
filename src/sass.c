@@ -39,9 +39,9 @@ static inline sass_object *sass_object_fetch_object(zend_object *obj) {
 
 zend_class_entry *sass_ce;
 
-void sass_free_storage(void *object TSRMLS_DC)
+static void sass_free_storage(zend_object *object)
 {
-    sass_object *obj = (sass_object *)object;
+    sass_object *obj = sass_object_fetch_object(object);
     if (obj->include_paths != NULL)
         efree(obj->include_paths);
 
@@ -50,7 +50,8 @@ void sass_free_storage(void *object TSRMLS_DC)
     if (obj->map_root != NULL)
         efree(obj->map_root);
 
-    zend_object_std_dtor(obj);
+    zval_ptr_dtor(&obj->importer);
+    zend_object_std_dtor(object);
 
     efree(obj);
 }
@@ -462,10 +463,13 @@ static PHP_MINIT_FUNCTION(sass)
 
     INIT_CLASS_ENTRY(ce, "Sass", sass_methods);
     ce.create_object = sass_create_handler;
+
     sass_ce = zend_register_internal_class(&ce TSRMLS_CC);
 
     memcpy(&sass_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     sass_handlers.clone_obj = NULL;
+    sass_handlers.free_obj = sass_free_storage;
+    sass_handlers.offset = XtOffsetOf(sass_object, zo);
 
     INIT_CLASS_ENTRY(exception_ce, "SassException", NULL);
     sass_exception_ce = zend_register_internal_class_ex(&exception_ce, sass_get_exception_base(TSRMLS_C));
