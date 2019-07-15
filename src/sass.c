@@ -272,7 +272,7 @@ PHP_METHOD(Sass, __construct)
 }
 
 
-void set_options(sass_object *this, struct Sass_Context *ctx)
+void set_generic_options(sass_object *this, struct Sass_Context *ctx)
 {
     struct Sass_Options* opts = sass_context_get_options(ctx);
 
@@ -344,11 +344,11 @@ PHP_METHOD(Sass, compile)
     sass_object *this = sass_object_fetch_object(Z_OBJ_P(getThis()));
 
     // Define our parameters as local variables
-    char *source;
-    size_t source_len;
+    char *source, *input_path = NULL;
+    size_t source_len, input_path_len = 0;
 
     // Use zend_parse_parameters() to grab our source from the function call
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &source, &source_len) == FAILURE){
+    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s|s", &source, &source_len, &input_path, &input_path_len) == FAILURE){
         RETURN_FALSE;
     }
 
@@ -356,7 +356,11 @@ PHP_METHOD(Sass, compile)
     struct Sass_Data_Context* data_context = sass_make_data_context(strdup(source));
     struct Sass_Context* ctx = sass_data_context_get_context(data_context);
 
-    set_options(this, ctx);
+    set_generic_options(this, ctx);
+    if (input_path != NULL){
+        struct Sass_Options* opts = sass_context_get_options(ctx);
+        sass_option_set_input_path(opts, input_path);
+    }
 
     int status = sass_compile_data_context(data_context);
 
@@ -407,7 +411,7 @@ PHP_METHOD(Sass, compileFile)
     struct Sass_File_Context* file_ctx = sass_make_file_context(file);
     struct Sass_Context* ctx = sass_file_context_get_context(file_ctx);
 
-    set_options(this, ctx);
+    set_generic_options(this, ctx);
 
     int status = sass_compile_file_context(file_ctx);
 
@@ -697,6 +701,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_compile, 0, 0, 1)
     ZEND_ARG_INFO(0, sass_string)
+    ZEND_ARG_INFO(0, input_path)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_sass_compileFile, 0, 0, 1)
