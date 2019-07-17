@@ -60,9 +60,10 @@ static void sass_free_storage(zend_object *object)
 
 zend_object *sass_create_handler(zend_class_entry *type)
 {
-    sass_object *obj = ecalloc(1,
-        sizeof(sass_object) +
-        zend_object_properties_size(type));
+    size_t size = sizeof(sass_object) + zend_object_properties_size(type);
+
+    sass_object *obj = emalloc(size);
+    memset(obj, 0, size - sizeof(zval));
 
     zend_object_std_init(&obj->zo, type);
     object_properties_init(&obj->zo, type);
