@@ -56,8 +56,6 @@ static void sass_free_storage(zend_object *object)
     zval_ptr_dtor(&obj->function_table);
 
     zend_object_std_dtor(object);
-
-    efree(obj);
 }
 
 zend_object *sass_create_handler(zend_class_entry *type)
