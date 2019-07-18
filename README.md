@@ -132,36 +132,42 @@ If there's a problem, the extension will throw a `SassException`:
 
 ## Changelog
 
-** Version 0.4.5 
+**Version 0.5.0**
+* Update Libsass to 3.6.1
+* Add support for PHP7+
+* Add support for custom functions written in PHP
+* Add support for custom inmporters written in PHP
+
+**Version 0.4.5**
 * Holiday Patch (Libsass 3.2.5) stable
 
-** Version 0.4.4 
+**Version 0.4.4**
 * Refactor correctly for LibSass 3.2.4
 
-** Version 0.4.2
+**Version 0.4.2**
 * CamelCase compile sequence
 
-** Version 0.4.1**
+**Version 0.4.1**
 * SOURCE_DEFAULT works & is documented
 * PHP test for SOURCE_DEFAULT (output unable to understand source directory in test, so functional pass, technical fail)
 * Revise other tests to pass as output varies on source negotiation.
 
-** Version 0.4**
+**Version 0.4**
 * Reconciled file compliation loop
 * Expand documentation
 * Addition of basic test for source comments
 * More work on compile sequence
 
-** Version 0.3.9**
+**Version 0.3.9**
 * Addition of source map url paths to SASS file compilation
 
-** Version 0.3.5**
+**Version 0.3.5**
 * Restructure of compile sequence (file only at this time) to account for source map output
 
-** Version 0.3.0**
+**Version 0.3.0**
 * Addition of source comments - none, inline, file. Set default to none.
 
-** Version 0.2.0**
+**Version 0.2.0**
 * Changed methods to be non-static
 * Allow setting include-path and image-path
 
