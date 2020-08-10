@@ -759,7 +759,7 @@ zend_function_entry sass_methods[] = {
     PHP_ME(Sass,  setImporter,       arginfo_sass_setImporter,    ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  setFunctions,      arginfo_sass_setFunctions,   ZEND_ACC_PUBLIC)
     PHP_ME(Sass,  getLibraryVersion, arginfo_sass_void,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_MALIAS(Sass, compile_file, compileFile, NULL, ZEND_ACC_PUBLIC)
+    PHP_MALIAS(Sass, compile_file, compileFile, arginfo_sass_compileFile, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
