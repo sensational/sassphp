@@ -23,6 +23,12 @@
 
 #include <sass.h>
 
+#if PHP_VERSION_ID >= 80000
+    #define TSRMLS_CC
+    #define TSRMLS_C
+    #define TSRMLS_D
+#endif
+
 zend_class_entry *sass_ce;
 zend_class_entry *sass_exception_ce;
 
