@@ -128,7 +128,7 @@ Sass_Import_List sass_importer(const char* path, Sass_Importer_Entry cb, struct 
     zval cb_retval;
     ZVAL_STRING(&cb_args[0], path);
 
-    if (call_user_function_ex(EG(function_table), NULL, &obj->importer, &cb_retval, 1, cb_args, 0, NULL) != SUCCESS || Z_ISUNDEF(cb_retval)) {
+    if (call_user_function(EG(function_table), NULL, &obj->importer, &cb_retval, 1, cb_args) != SUCCESS || Z_ISUNDEF(cb_retval)) {
         zval_ptr_dtor(&cb_args[0]);
         return NULL;
     }
@@ -233,7 +233,7 @@ union Sass_Value* sass_function(const union Sass_Value* s_args, Sass_Function_En
     ZVAL_STRING(&cb_args[0], string_value);
     cb_args[1] = path_info;
 
-    if (call_user_function_ex(EG(function_table), NULL, callback, &cb_retval, 2, cb_args, 0, NULL) != SUCCESS || Z_ISUNDEF(cb_retval)) {
+    if (call_user_function(EG(function_table), NULL, callback, &cb_retval, 2, cb_args) != SUCCESS || Z_ISUNDEF(cb_retval)) {
         zval_ptr_dtor(&cb_args[0]);
         return sass_make_null();
     }
