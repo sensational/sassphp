@@ -473,8 +473,8 @@ PHP_METHOD(Sass, getIncludePath)
     }
 
     sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
-    if (obj->include_paths == NULL) RETURN_STRING("")
-    RETURN_STRING(obj->include_paths)
+    if (obj->include_paths == NULL) RETURN_STRING("");
+    RETURN_STRING(obj->include_paths);
 }
 
 PHP_METHOD(Sass, setIncludePath)
@@ -501,8 +501,8 @@ PHP_METHOD(Sass, getMapPath)
 
     sass_object *obj = sass_object_fetch_object(Z_OBJ_P(getThis()));
 
-    if (obj->map_path == NULL) RETURN_STRING("")
-    RETURN_STRING(obj->map_path)
+    if (obj->map_path == NULL) RETURN_STRING("");
+    RETURN_STRING(obj->map_path);
 }
 
 PHP_METHOD(Sass, setMapPath)
@@ -680,7 +680,7 @@ PHP_METHOD(Sass, getLibraryVersion)
         RETURN_FALSE;
     }
 
-    RETURN_STRING(libsass_version())
+    RETURN_STRING(libsass_version());
 }
 /* --------------------------------------------------------------
  * EXCEPTION HANDLING
