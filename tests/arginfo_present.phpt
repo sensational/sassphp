@@ -1,7 +1,7 @@
 --TEST--
 Making sure ARG_INFO is present
 --SKIPIF--
-<?php if (!extension_loaded("sass") || !class_exists('ReflectionClass')) print "skip"; ?>
+<?php if (!extension_loaded("sass") || !class_exists('ReflectionClass')) print "skip"; ?>
 --FILE--
 <?php
 
