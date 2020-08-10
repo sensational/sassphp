@@ -132,6 +132,9 @@ If there's a problem, the extension will throw a `SassException`:
 
 ## Changelog
 
+**Version 0.5.1**
+* Add support for PHP8
+
 **Version 0.5.0**
 * Update Libsass to 3.6.1
 * Add support for PHP7+
