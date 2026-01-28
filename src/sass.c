@@ -688,7 +688,7 @@ PHP_METHOD(Sass, getLibraryVersion)
 
 zend_class_entry *sass_get_exception_base(TSRMLS_D)
 {
-    return zend_exception_get_default(TSRMLS_C);
+    return zend_ce_exception;
 }
 
 /* --------------------------------------------------------------
